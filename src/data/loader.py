@@ -14,7 +14,7 @@ def load(path: str | Path) -> list[dict]:
     path = Path(path)
     suffix = path.suffix.lower()
 
-    # --- local files ---------------------------------------------------------
+    # --- local files 
     if path.exists():
         if suffix == ".pdf":
             docs = PyPDFLoader(str(path)).load()

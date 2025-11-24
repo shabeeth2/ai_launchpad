@@ -11,7 +11,7 @@ from langchain_community.agent_toolkits import GmailToolkit
 from langchain_community.tools.tavily_search import TavilySearchResults
 import httpx, json, pathlib, typing as t
 
-# ---------- academic / web --------------------------------------------------
+# ---------- academic papes / web 
 @tool
 def arxiv_search(query: str) -> str:
     """Search ArXiv for a paper."""
@@ -27,7 +27,7 @@ def duck_search(query: str) -> str:
     """DuckDuckGo instant answers."""
     return DuckDuckGoSearchRun().run(query)
 
-# ---------- compute ---------------------------------------------------------
+# ---------- compute 
 @tool
 def python_repl(code: str) -> str:
     """Execute Python code and return stdout / stderr."""
@@ -41,12 +41,9 @@ def calculator(expr: str) -> str:
     except Exception as e:
         return f"Error: {e}"
 
-# ---------- gmail (optional) -------------------------------------------------
-def gmail_toolkit() -> list:
-    """Returns *list* of Gmail tools ready for LangGraph."""
-    return GmailToolkit().get_tools()
 
-# ---------- weather (open-meteo) ---------------------------------------------
+
+# ---------- weather (open-meteo) 
 @tool
 def weather(lat: float, lon: float) -> str:
     """Current weather at lat/lon."""
@@ -55,7 +52,7 @@ def weather(lat: float, lon: float) -> str:
     r.raise_for_status()
     return json.dumps(r.json()["current_weather"])
 
-# ---------- io helpers -------------------------------------------------------
+# ---------- io helpers 
 @tool
 def scrape_url(url: str) -> str:
     """Return plain text of a web page."""

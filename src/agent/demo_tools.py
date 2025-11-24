@@ -1,8 +1,9 @@
 from langchain_openai import ChatOpenAI
 from toolkit import create_react_agent_with_tools, duck_search, calculator, InMemorySaver
+from src.llm.client import get_llm, get_embeddings
 
 tools = [duck_search, calculator]
-llm = ChatOpenAI(model="gpt-4o-mini", temperature=0)
+llm = get_llm(temperature=0)
 
 agent = create_react_agent_with_tools(llm, tools)
 config = {"configurable": {"thread_id": "demo"}}  # memory key
