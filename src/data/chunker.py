@@ -2,7 +2,7 @@
 from typing import List
 from langchain.text_splitter import (
     RecursiveCharacterTextSplitter,
-    CharacterTextSplitter
+    CharacterTextSplitter,
 )
 
 def sliding_window(text: str, chunk_size: int = 512, overlap: int = 50) -> List[str]:
