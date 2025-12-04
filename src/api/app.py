@@ -21,7 +21,7 @@ import asyncio
 
 model = ChatOpenAI(
     model="gemini-2.0-flash",             # Any Gemini model
-    api_key="AIzaSyD_H9ASnR8TNyfy8qj7uCVGXU-BfYzxYGs",        # The Gemini API key
+    api_key="********",        # The Gemini API key
     base_url="https://generativelanguage.googleapis.com/v1beta/"
 )
 

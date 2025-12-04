@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-12-04T05:30:27.836594",
+  "row_count": 1000,
+  "column_count": 10,
+  "column_stats": {
+    "date": {
+      "name": "date",
+      "dtype": "datetime64[ns]",
+      "null_count": 0,
+      "null_percentage": 0.0,
+      "unique_count": 1000,
+      "unique_percentage": 1.0,
+      "stats": {
+        "top": "2023-03-10T11:00:27.834016",
+        "freq": 1,
+        "n_unique": 1000,
+        "value_counts": {
+          

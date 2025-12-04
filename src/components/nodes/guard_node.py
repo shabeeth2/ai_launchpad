@@ -1,17 +1,24 @@
-from src.components.state import AgentState
-# Placeholder for Guardrails AI implementation
-# In a real scenario, you would initialize a Guard object here
-
-def guard_node(state: AgentState) -> AgentState:
-    """
-    Checks inputs/outputs against safety guardrails.
-    For now, it's a pass-through that initializes metadata.
-    """
-    print("--- GUARD NODE ---")
-    # Example logic:
-    # guard.validate(state["messages"][-1].content)
+def guard_node(state):
+    valid = state["validation_report"]["passed"]
+    retry = state["retry_count"]
     
-    if not state.get("safety_metadata"):
-        state["safety_metadata"] = {"safe": True}
-    
-    return state
+    # 1. Self-Correction Loop
+    if not valid:
+        if retry < 3:
+            return {
+                "policy_decision": "retry",
+                "retry_count": retry + 1,
+                "audit_log": ["Guard: Validation failed. Retrying..."]
+            }
+        else:
+            return {"policy_decision": "reject", "audit_log": ["Guard: Max retries reached."]}
+            
+    # 2. Human Review Logic
+    # If rule flags > 0 rows, we might want a human to check
+    if state["validation_report"]["rows_flagged"] > 0:
+        return {
+            "policy_decision": "human_review",
+            "audit_log": ["Guard: Anomalies found. Requesting Human Review."]
+        }
+        
+    return {"policy_decision": "approve", "audit_log": ["Guard: Auto-Approved."]}

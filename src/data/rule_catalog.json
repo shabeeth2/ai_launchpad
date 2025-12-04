@@ -1,0 +1,12 @@
+[
+    {
+        "template_id": "DQ-001",
+        "description": "Mandatory Field Check",
+        "sql_template": "SELECT * FROM {table} WHERE {column} IS NULL"
+    },
+    {
+        "template_id": "DQ-002",
+        "description": "Uniqueness Check",
+        "sql_template": "SELECT {column}, COUNT(*) FROM {table} GROUP BY {column} HAVING COUNT(*) > 1"
+    }
+]

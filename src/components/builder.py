@@ -1,51 +1,63 @@
-from typing import List, Optional, Callable
+import sqlite3
+# from langgraph.checkpoint.sqlite import SqliteSaver
+from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import StateGraph, END
-from langchain_core.tools import BaseTool
 
 from src.components.state import AgentState
+from src.components.nodes.ingest_node import ingest_node
+from src.components.nodes.drift_node import drift_node
+from src.components.nodes.rulegen_node import rulegen_node
+from src.components.nodes.validator_node import validator_node
 from src.components.nodes.guard_node import guard_node
-from src.components.nodes.memory_node import memory_node
-from src.components.nodes.agent_node import agent_node
-from src.components.nodes.planner_node import planner_node
-from src.components.nodes.evaluator_node import evaluator_node
-from src.components.nodes.judge_node import judge_node
 
-class WorkflowBuilder:
-    def __init__(self, system_prompt: str = "You are a helpful assistant.", tools: List[BaseTool] = []):
-        self.system_prompt = system_prompt
-        self.tools = tools
-        self.graph_builder = StateGraph(AgentState)
+# Define Routing Logic
+def route_policy(state):
+    decision = state["policy_decision"]
+    if decision == "retry": return "rulegen"
+    if decision == "human_review": return "hitl_node"
+    if decision == "approve": return "deploy" # or END
+    return END
 
-    def build_basic_graph(self):
-        """
-        Builds the standard Guard -> Memory -> Agent flow.
-        """
-        self.graph_builder.add_node("guard", guard_node)
-        self.graph_builder.add_node("memory", memory_node)
-        self.graph_builder.add_node("agent", agent_node)
-
-        self.graph_builder.set_entry_point("guard")
-        
-        self.graph_builder.add_edge("guard", "memory")
-        self.graph_builder.add_edge("memory", "agent")
-        self.graph_builder.add_edge("agent", END)
-
-        return self.graph_builder.compile()
-
-    def build_advanced_graph(self):
-        """
-        Builds a flow with Planner -> Agent -> Evaluator -> Judge.
-        """
-        self.graph_builder.add_node("planner", planner_node)
-        self.graph_builder.add_node("agent", agent_node)
-        self.graph_builder.add_node("evaluator", evaluator_node)
-        self.graph_builder.add_node("judge", judge_node)
-
-        self.graph_builder.set_entry_point("planner")
-
-        self.graph_builder.add_edge("planner", "agent")
-        self.graph_builder.add_edge("agent", "evaluator")
-        self.graph_builder.add_edge("evaluator", "judge")
-        self.graph_builder.add_edge("judge", END)
-        
-        return self.graph_builder.compile()
+def build_graph():
+    # 1. Checkpointer
+    # conn = sqlite3.connect("checkpoints.db", check_same_thread=False)
+    # checkpointer = SqliteSaver(conn)
+    checkpointer = MemorySaver()
+    
+    # 2. Graph
+    workflow = StateGraph(AgentState)
+    
+    # 3. Nodes
+    workflow.add_node("ingest", ingest_node)
+    workflow.add_node("drift", drift_node)
+    workflow.add_node("rulegen", rulegen_node)
+    workflow.add_node("validator", validator_node)
+    workflow.add_node("guard_node", guard_node)
+    
+    # Dummy node for HITL pause
+    workflow.add_node("hitl_node", lambda s: s) 
+    
+    # 4. Edges
+    workflow.set_entry_point("ingest")
+    workflow.add_edge("ingest", "drift")
+    workflow.add_edge("drift", "rulegen")
+    workflow.add_edge("rulegen", "validator")
+    workflow.add_edge("validator", "guard_node")
+    
+    # Conditional Edge
+    workflow.add_conditional_edges(
+        "guard_node",
+        route_policy,
+        {
+            "rulegen": "rulegen",
+            "hitl_node": "hitl_node",
+            "deploy": END, # Connect to deploy node if you have one
+            END: END
+        }
+    )
+    
+    # 5. Compile with Interrupt
+    return workflow.compile(
+        checkpointer=checkpointer,
+        interrupt_before=["hitl_node"]
+    )
